@@ -91,7 +91,7 @@ def get_headers(cookie_string):
         "sec-fetch-mode": "cors",
         "sec-fetch-site": "same-origin",
         "user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36",
-        "x-tenant-id": "SHEIN",
+        "x-tenant-id": "shein",
         "cookie": cookie_string
     }
 
@@ -117,7 +117,6 @@ def send_message(user_id, text):
 # =========================
 
 def get_value(code):
-
     return VOUCHER_VALUES.get(code[:3], 0)
 
 # =========================
@@ -134,7 +133,6 @@ def check_voucher(session, code, headers):
     }
 
     try:
-
         r = session.post(url, json=payload, headers=headers, timeout=30)
         data = r.json()
 
@@ -165,7 +163,7 @@ def reset_voucher(session, code, headers):
         pass
 
 # =========================
-# MAIN CHECKER LOOP (FIXED)
+# MAIN CHECKER LOOP (FIXED SESSION ONLY)
 # =========================
 
 def checker_loop():
@@ -205,44 +203,46 @@ def checker_loop():
                     if ok:
 
                         value = get_value(code)
-
                         valid.append((code, value))
-
                         total += value
 
                     reset_voucher(session, code, headers)
-
                     time.sleep(random.uniform(3,6))
 
                 # FORMAT MESSAGE
 
-                msg = (
-                    "SHEIN COUPON CHECK COMPLETED\n\n"
-                    f"Check Number: #{check_counts[user_id]}\n"
-                    f"Time: {current_time}\n\n"
-                )
+                msg = "💎 YOUR COUPONS\n\n"
+                grouped = {}
 
-                if valid:
+                for code in codes:
 
-                    msg += "Valid Coupons:\n\n"
+                    value = get_value(code)
 
-                    for code, value in valid:
-                        msg += f"{code} → ₹{value}\n"
+                    if value not in grouped:
+                        grouped[value] = []
 
-                    msg += f"\nTotal Value: ₹{total}"
+                    if any(code == v[0] for v in valid):
+                        grouped[value].append(f"✅ {code}")
+                    else:
+                        grouped[value].append(f"❌ {code}")
 
-                else:
+                for value in sorted(grouped.keys(), reverse=True):
 
-                    msg += "No valid coupons"
+                    msg += f"₹{value} Coupons :\n"
 
+                    for line in grouped[value]:
+                        msg += f"{line}\n"
+
+                    msg += "\n"
+
+                msg += f"💰 Total Potential Value : ₹{total}"
                 msg += "\n\nmade by @koku1209"
 
                 send_message(user_id, msg)
 
-                session.close()
+                session.close()   # ✅ Only one close now
 
         except Exception as e:
-
             print("Checker error:", e)
 
         time.sleep(CHECK_INTERVAL)
@@ -254,7 +254,6 @@ def checker_loop():
 def telegram_loop():
 
     offset = None
-
     load_data()
 
     while True:
@@ -285,7 +284,6 @@ def telegram_loop():
                     if user_id not in users:
                         users[user_id] = []
 
-                    # START
                     if text == "/start":
 
                         send_message(
@@ -293,21 +291,13 @@ def telegram_loop():
                             "Send coupon codes\nmade by @koku1209"
                         )
 
-                    # LIST
                     elif text == "/list":
 
                         if users[user_id]:
-
-                            send_message(
-                                user_id,
-                                "\n".join(users[user_id])
-                            )
-
+                            send_message(user_id, "\n".join(users[user_id]))
                         else:
-
                             send_message(user_id, "No codes saved")
 
-                    # REMOVE
                     elif text.startswith("/remove"):
 
                         parts = text.split()
@@ -319,28 +309,20 @@ def telegram_loop():
                             if code in users[user_id]:
 
                                 users[user_id].remove(code)
-
                                 save_data()
 
-                                send_message(
-                                    user_id,
-                                    f"Removed {code}"
-                                )
+                                send_message(user_id, f"Removed {code}")
 
-                    # CLEAR
                     elif text == "/clear":
 
                         users[user_id] = []
-
                         save_data()
 
                         send_message(user_id, "All codes cleared")
 
-                    # ADD CODES
                     else:
 
                         new_codes = text.split()
-
                         added = 0
 
                         for code in new_codes:
@@ -351,7 +333,6 @@ def telegram_loop():
                             ):
 
                                 users[user_id].append(code)
-
                                 added += 1
 
                         save_data()
@@ -362,7 +343,6 @@ def telegram_loop():
                         )
 
         except Exception as e:
-
             print("Telegram error:", e)
 
         time.sleep(2)
