@@ -16,7 +16,7 @@ API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 # SETTINGS
 # =========================
 
-CHECK_INTERVAL = 220
+CHECK_INTERVAL = 80
 DATA_FILE = "users_codes.json"
 MAX_CODES = 20
 
