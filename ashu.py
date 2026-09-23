@@ -9,7 +9,7 @@ import os
 # TELEGRAM CONFIG
 # =========================
 
-BOT_TOKEN = "8259447924:AAHWrIwKeT6m07S_Hw20ROT8_wwtpamIDe4"
+BOT_TOKEN = "8259447924:AAHWrIwKeT6m07S_Hw20IDe4"
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 # =========================
